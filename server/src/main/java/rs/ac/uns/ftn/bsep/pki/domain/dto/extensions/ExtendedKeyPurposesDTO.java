@@ -5,11 +5,8 @@ import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.ExtendedKeyPurpose;
-
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 public class ExtendedKeyPurposesDTO {
 

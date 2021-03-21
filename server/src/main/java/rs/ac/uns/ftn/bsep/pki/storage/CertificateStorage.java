@@ -25,7 +25,7 @@ public class CertificateStorage {
                 keyStore.load(null, null);
             }
 
-            // zasto je password serijski broj?
+            // zasto je password serijski broj???
             keyStore.setKeyEntry(
                     serialNumber,
                     certificateChain.getPrivateKey(),

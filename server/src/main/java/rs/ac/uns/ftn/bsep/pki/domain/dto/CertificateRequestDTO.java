@@ -3,6 +3,7 @@ package rs.ac.uns.ftn.bsep.pki.domain.dto;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateRequest;
 import rs.ac.uns.ftn.bsep.pki.domain.dto.extensions.ExtensionsDTO;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
+import rs.ac.uns.ftn.bsep.pki.mappers.CertificateRequestMapper;
 
 public class CertificateRequestDTO {
 
@@ -16,7 +17,11 @@ public class CertificateRequestDTO {
     }
 
     private CertificateRequest toCertificateRequest() {
-        return new CertificateRequest(subjectInfo.toSubjectInfo().toX500Name(), issuerSerialNumber, certificateType, certificateValidity.toCertificateValidity());
+        return new CertificateRequest(
+                                    new CertificateRequestMapper().toX500Name(subjectInfo),
+                                    issuerSerialNumber,
+                                    certificateType,
+                                    certificateValidity.toCertificateValidity());
     }
 
     public SubjectInfoDTO getSubjectInfo() {
