@@ -1,5 +1,6 @@
 package rs.ac.uns.ftn.bsep.pki.domain.dto;
 
+import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateRequest;
 import rs.ac.uns.ftn.bsep.pki.domain.dto.extensions.ExtensionsDTO;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
 
@@ -12,6 +13,10 @@ public class CertificateRequestDTO {
     private ExtensionsDTO extensions;
 
     public CertificateRequestDTO() {
+    }
+
+    private CertificateRequest toCertificateRequest() {
+        return new CertificateRequest(subjectInfo.toSubjectInfo().toX500Name(), issuerSerialNumber, certificateType, certificateValidity.toCertificateValidity());
     }
 
     public SubjectInfoDTO getSubjectInfo() {

@@ -1,19 +1,14 @@
-package rs.ac.uns.ftn.bsep.pki.domain.dto;
-
-import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateValidity;
+package rs.ac.uns.ftn.bsep.pki.domain.certificate;
 
 import java.util.Date;
 
-public class ValidityDTO {
-
+public class CertificateValidity {
     private Date validFrom;
     private Date validTo;
 
-    public ValidityDTO() {
-    }
-
-    public CertificateValidity toCertificateValidity() {
-        return new CertificateValidity(validFrom, validTo);
+    public CertificateValidity(Date validFrom, Date validTo) {
+        this.validFrom = validFrom;
+        this.validTo = validTo;
     }
 
     public Date getValidFrom() {
