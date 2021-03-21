@@ -1,6 +1,7 @@
 package rs.ac.uns.ftn.bsep.pki.storage;
 
 import org.springframework.stereotype.Component;
+import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateChain;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -9,15 +10,13 @@ import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 
 @Component
 public class CertificateStorage {
 
-    public void store(X509Certificate[] certificateChain, PrivateKey privateKey) {
-        String serialNumber = certificateChain[0].getSerialNumber().toString();
+    public void store(CertificateChain certificateChain) {
+        String serialNumber = certificateChain.getCertificateChain()[0].getSerialNumber().toString();
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
             try {
@@ -27,7 +26,11 @@ public class CertificateStorage {
             }
 
             // zasto je password serijski broj?
-            keyStore.setKeyEntry(serialNumber, privateKey, serialNumber.toCharArray(), certificateChain);
+            keyStore.setKeyEntry(
+                    serialNumber,
+                    certificateChain.getPrivateKey(),
+                    serialNumber.toCharArray(),
+                    certificateChain.getCertificateChain());
             keyStore.store(new FileOutputStream("keystore.p12"), "123456".toCharArray());
         } catch (KeyStoreException e) {
             e.printStackTrace();
