@@ -59,11 +59,6 @@ public class CertificateRequestMapper {
         return builder.build();
     }
     public List<Extension> toExtensions(ExtensionsDTO extensions){
-        try {
-            return extensions.toExtensions();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return extensions.toExtensions();
     }
 }

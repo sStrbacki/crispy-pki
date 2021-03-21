@@ -16,12 +16,13 @@ public class CertificateRequestDTO {
     public CertificateRequestDTO() {
     }
 
-    private CertificateRequest toCertificateRequest() {
+    public CertificateRequest toCertificateRequest() {
         return new CertificateRequest(
-                                    new CertificateRequestMapper().toX500Name(subjectInfo),
-                                    issuerSerialNumber,
-                                    certificateType,
-                                    certificateValidity.toCertificateValidity());
+                new CertificateRequestMapper().toX500Name(subjectInfo),
+                issuerSerialNumber,
+                extensions.toExtensions(),
+                certificateType,
+                certificateValidity.toCertificateValidity());
     }
 
     public SubjectInfoDTO getSubjectInfo() {

@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateChain;
 import rs.ac.uns.ftn.bsep.pki.domain.dto.CertificateRequestDTO;
 import rs.ac.uns.ftn.bsep.pki.mappers.CertificateRequestMapper;
 import rs.ac.uns.ftn.bsep.pki.service.CertificateService;
@@ -23,13 +24,7 @@ public class CertificateController {
     }
 
     @PostMapping
-    public ResponseEntity<?> save(@RequestBody CertificateRequestDTO certificateRequestDTO){
-        var name = certificateRequestMapper
-                .toX500Name(certificateRequestDTO.getSubjectInfo());
-        var extensions =
-                certificateRequestMapper.toExtensions(certificateRequestDTO.getExtensions());
-        certificateService.save(name,extensions,certificateRequestDTO.getIssuerSerialNumber());
-
-        return ResponseEntity.ok(null);
+    public CertificateChain save(@RequestBody CertificateRequestDTO certificateRequestDTO){
+        return certificateService.save(certificateRequestDTO.toCertificateRequest());
     }
 }

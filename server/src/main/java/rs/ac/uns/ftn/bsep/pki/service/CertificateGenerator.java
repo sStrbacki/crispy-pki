@@ -13,8 +13,10 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.springframework.stereotype.Component;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateChain;
+import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateRequest;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.IssuerData;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.SubjectData;
+import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
 
 import java.math.BigInteger;
 import java.security.*;
@@ -32,13 +34,6 @@ public class CertificateGenerator {
         Security.addProvider(new BouncyCastleProvider());
         this.builder = new JcaContentSignerBuilder("SHA256WithRSAEncryption");
         this.builder.setProvider("BC");
-    }
-
-    public CertificateChain generateRootCertificate(X500Name subjectDistinguishedName, List<Extension> extensions) {
-        var keyPair = generateKeyPair();
-        var subjectData = generateSubjectData(keyPair.getPublic(), subjectDistinguishedName, true);
-        var issuerData = new IssuerData(subjectDistinguishedName, keyPair.getPrivate());
-        return generateCertificate(subjectData, issuerData, extensions);
     }
 
     public CertificateChain generateCertificate(SubjectData subjectData, IssuerData issuerData, List<Extension> extensions) {
@@ -63,31 +58,6 @@ public class CertificateGenerator {
             e.printStackTrace();
         }
 
-        return null;
-    }
-
-    private SubjectData generateSubjectData(PublicKey publicKey, X500Name subjectDistinguishedName, boolean isCA) {
-        long now = System.currentTimeMillis();
-        Date startDate = new Date(now);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(startDate);
-        if (isCA)
-            calendar.add(Calendar.YEAR, 20);
-        else
-            calendar.add(Calendar.YEAR, 10);
-        Date endDate = calendar.getTime();
-        return new SubjectData(publicKey, subjectDistinguishedName, Long.toString(now), startDate, endDate);
-    }
-
-    private KeyPair generateKeyPair() {
-        try {
-            var keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-            SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
-            keyPairGenerator.initialize(2048, random);
-            return keyPairGenerator.generateKeyPair();
-        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-            e.printStackTrace();
-        }
         return null;
     }
 }

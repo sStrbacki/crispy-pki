@@ -29,8 +29,13 @@ public class ExtensionsDTO {
     public void setExtendedKeyPurposes(ExtendedKeyPurposesDTO extendedKeyPurposes) {
         this.extendedKeyPurposes = extendedKeyPurposes;
     }
-    public List<Extension> toExtensions() throws IOException {
-        return Arrays.asList(this.keyPurposes.toExtension(), this.extendedKeyPurposes.toExtension());
+    public List<Extension> toExtensions() {
+        try {
+            return Arrays.asList(this.keyPurposes.toExtension(), this.extendedKeyPurposes.toExtension());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
