@@ -12,6 +12,7 @@ public class CertificateChain {
         this.privateKey = privateKey;
     }
 
+
     public X509Certificate[] getCertificateChain() {
         return certificateChain;
     }

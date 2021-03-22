@@ -21,8 +21,6 @@ import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 @Component

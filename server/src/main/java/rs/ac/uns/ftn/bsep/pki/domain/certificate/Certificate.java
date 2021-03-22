@@ -15,9 +15,6 @@ public class Certificate {
     @Column(nullable = false,unique = true)
     private String serialNumber;
 
-    @Column(unique = true)
-    private String commonName;
-
     @Column(nullable = false)
     private CertificateType certificateType;
 
@@ -28,6 +25,13 @@ public class Certificate {
     private RevocationReasonCode reasonCode;
 
     public Certificate() {
+    }
+
+    public Certificate(String serialNumber, CertificateType certificateType){
+        this.serialNumber = serialNumber;
+        this.certificateType = certificateType;
+        this.revoked = false;
+        this.reasonCode = null;
     }
 
     public Long getId() {
@@ -44,14 +48,6 @@ public class Certificate {
 
     public void setSerialNumber(String serialNumber) {
         this.serialNumber = serialNumber;
-    }
-
-    public String getCommonName() {
-        return commonName;
-    }
-
-    public void setCommonName(String commonName) {
-        this.commonName = commonName;
     }
 
     public CertificateType getCertificateType() {

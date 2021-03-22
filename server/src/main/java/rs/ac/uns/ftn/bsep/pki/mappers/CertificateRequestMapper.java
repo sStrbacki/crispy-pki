@@ -58,7 +58,4 @@ public class CertificateRequestMapper {
         }
         return builder.build();
     }
-    public List<Extension> toExtensions(ExtensionsDTO extensions){
-        return extensions.toExtensions();
-    }
 }
