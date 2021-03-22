@@ -38,7 +38,7 @@ public class CertificateService {
         }
         var certificateChain =
                 certificateGenerator.generateCertificate(subjectData, issuerData, certificateRequest.getExtensions());
-        certificateStorage.store(certificateChain);
+        certificateStorage.store(certificateChain, certificateRequest.getType());
         return certificateRepository.save(new Certificate(
                 subjectData.getSerialNumber(),
                 certificateRequest.getType()
