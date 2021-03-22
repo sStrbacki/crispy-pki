@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateChain;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.IssuerData;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
+import rs.ac.uns.ftn.bsep.pki.exceptions.IssuerNotFoundException;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -92,7 +93,7 @@ public class CertificateStorage {
         return null;
     }
 
-    public IssuerData findCAbySerialNumber(String serialNumber) {
+    public IssuerData findCAbySerialNumber(String serialNumber) throws IssuerNotFoundException {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
             keyStore.load(new FileInputStream("ca_keystore.p12"), "123456".toCharArray());
@@ -101,7 +102,7 @@ public class CertificateStorage {
                 X509Certificate certificate = (X509Certificate) keyStore.getCertificate(serialNumber);
                 return new IssuerData(new JcaX509CertificateHolder(certificate).getSubject(), (PrivateKey) key);
             } else {
-                return null;
+                throw new IssuerNotFoundException("Issuer not found!");
             }
         } catch (KeyStoreException e) {
             e.printStackTrace();

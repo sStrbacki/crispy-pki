@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.*;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.Certificate;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
+import rs.ac.uns.ftn.bsep.pki.exceptions.IssuerNotFoundException;
 import rs.ac.uns.ftn.bsep.pki.repository.CertificateRepository;
 import rs.ac.uns.ftn.bsep.pki.storage.CertificateStorage;
 
