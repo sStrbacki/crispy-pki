@@ -2,6 +2,7 @@ package rs.ac.uns.ftn.bsep.pki.storage;
 
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.springframework.stereotype.Component;
+import rs.ac.uns.ftn.bsep.pki.config.Config;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateChain;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.IssuerData;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
@@ -15,15 +16,24 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class CertificateStorage {
 
+    private final Config config;
+
+    public CertificateStorage(Config config) {
+        this.config = config;
+    }
+
     public void store(CertificateChain certificateChain, CertificateType type) {
         if (type == CertificateType.END_ENTITY) {
-            store(certificateChain, "end_entity_keystore.p12");
+            store(certificateChain, config.getEEKeyStore());
         } else {
-            store(certificateChain, "ca_keystore.p12");
+            store(certificateChain, config.getCAKeyStore());
         }
     }
 
@@ -32,7 +42,7 @@ public class CertificateStorage {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
             try {
-                keyStore.load(new FileInputStream(keyStorePath), "123456".toCharArray());
+                keyStore.load(new FileInputStream(keyStorePath), config.getKeyStorePassword().toCharArray());
             } catch (IOException e) {
                 keyStore.load(null, null);
             }
@@ -41,7 +51,7 @@ public class CertificateStorage {
                     certificateChain.getPrivateKey(),
                     serialNumber.toCharArray(),
                     certificateChain.getCertificateChain());
-            keyStore.store(new FileOutputStream(keyStorePath), "123456".toCharArray());
+            keyStore.store(new FileOutputStream(keyStorePath), config.getKeyStorePassword().toCharArray());
         } catch (KeyStoreException e) {
             e.printStackTrace();
         } catch (CertificateException e) {
@@ -58,8 +68,13 @@ public class CertificateStorage {
     public Certificate[] readCertificateChain(String serialNumber) {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(new FileInputStream("keystore.p12"), "123456".toCharArray());
-            return keyStore.getCertificateChain(serialNumber);
+            keyStore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
+            var certificateChain = keyStore.getCertificateChain(serialNumber);
+            String lastSerialNumber = ((X509Certificate)certificateChain[certificateChain.length - 1]).getSerialNumber().toString();
+            keyStore.load(new FileInputStream(config.getEEKeyStore()), config.getKeyStorePassword().toCharArray());
+            List certificateList = new ArrayList(Arrays.asList(certificateChain));
+            certificateList.addAll(Arrays.asList(keyStore.getCertificateChain(lastSerialNumber)));
+            return (Certificate[]) certificateList.toArray();
         } catch (KeyStoreException e) {
             e.printStackTrace();
         } catch (CertificateException e) {
@@ -76,9 +91,15 @@ public class CertificateStorage {
 
     public Certificate readCertificate(String serialNumber) {
         try {
+            Certificate certificate;
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(new FileInputStream("keystore.p12"), "123456".toCharArray());
-            return keyStore.getCertificate(serialNumber);
+            keyStore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
+            certificate = keyStore.getCertificate(serialNumber);
+            if (certificate == null) {
+                keyStore.load(new FileInputStream(config.getEEKeyStore()), config.getKeyStorePassword().toCharArray());
+                certificate = keyStore.getCertificate(serialNumber);
+            }
+            return certificate;
         } catch (KeyStoreException e) {
             e.printStackTrace();
         } catch (CertificateException e) {
@@ -96,7 +117,7 @@ public class CertificateStorage {
     public IssuerData findCAbySerialNumber(String serialNumber) throws IssuerNotFoundException {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(new FileInputStream("ca_keystore.p12"), "123456".toCharArray());
+            keyStore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
             Key key = keyStore.getKey(serialNumber, serialNumber.toCharArray());
             if (key instanceof PrivateKey) {
                 X509Certificate certificate = (X509Certificate) keyStore.getCertificate(serialNumber);

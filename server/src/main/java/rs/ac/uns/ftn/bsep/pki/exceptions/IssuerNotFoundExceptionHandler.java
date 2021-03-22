@@ -12,7 +12,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 public class IssuerNotFoundExceptionHandler {
 
     @ResponseBody
-    @ExceptionHandler(value = RuntimeException.class)
+    @ExceptionHandler(value = IssuerNotFoundException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     String handleIssuerNotFound(IssuerNotFoundException e) {
         return e.getMessage();

@@ -10,6 +10,10 @@ import rs.ac.uns.ftn.bsep.pki.repository.CertificateRepository;
 import rs.ac.uns.ftn.bsep.pki.storage.CertificateStorage;
 
 import java.security.*;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CertificateService {
@@ -69,6 +73,11 @@ public class CertificateService {
                 Long.toString(now),
                 validity.getValidFrom(),
                 validity.getValidTo());
+    }
+
+    public List<Certificate> getCertificateChain(String serialNumber) {
+        return Arrays.stream(certificateStorage.readCertificateChain(serialNumber))
+                .map(certificate -> new Certificate(((X509Certificate)certificate).getSerialNumber().toString(), null)).collect(Collectors.toList());
     }
 
 }
