@@ -75,9 +75,8 @@ public class CertificateService {
                 validity.getValidTo());
     }
 
-    public List<Certificate> getCertificateChain(String serialNumber) {
-        return Arrays.stream(certificateStorage.readCertificateChain(serialNumber))
-                .map(certificate -> new Certificate(((X509Certificate)certificate).getSerialNumber().toString(), null)).collect(Collectors.toList());
+    public X509Certificate getCertificate(String serialNumber) {
+        return (X509Certificate)certificateStorage.readCertificate(serialNumber);
     }
 
 }

@@ -16,9 +16,6 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @Component
 public class CertificateStorage {
@@ -65,16 +62,11 @@ public class CertificateStorage {
         }
     }
 
-    public Certificate[] readCertificateChain(String serialNumber) {
+    private Certificate[] readCAChain(String serialNumber) {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
             keyStore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
-            var certificateChain = keyStore.getCertificateChain(serialNumber);
-            String lastSerialNumber = ((X509Certificate)certificateChain[certificateChain.length - 1]).getSerialNumber().toString();
-            keyStore.load(new FileInputStream(config.getEEKeyStore()), config.getKeyStorePassword().toCharArray());
-            List certificateList = new ArrayList(Arrays.asList(certificateChain));
-            certificateList.addAll(Arrays.asList(keyStore.getCertificateChain(lastSerialNumber)));
-            return (Certificate[]) certificateList.toArray();
+            return keyStore.getCertificateChain(serialNumber);
         } catch (KeyStoreException e) {
             e.printStackTrace();
         } catch (CertificateException e) {
