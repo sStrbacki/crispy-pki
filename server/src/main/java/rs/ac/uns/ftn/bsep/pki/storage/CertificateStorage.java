@@ -1,6 +1,7 @@
 package rs.ac.uns.ftn.bsep.pki.storage;
 
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
 import rs.ac.uns.ftn.bsep.pki.config.Config;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateChain;
@@ -18,6 +19,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 @Component
@@ -25,88 +28,83 @@ public class CertificateStorage {
 
     private final Config config;
 
-    public CertificateStorage(Config config) {
+    private final KeyStore EEKeystore;
+    private final KeyStore CAKeystore;
+
+    public CertificateStorage(Config config)
+            throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException
+    {
+        String KEYSTORE_TYPE = "PKCS12";
+
+        this.EEKeystore = KeyStore.getInstance(KEYSTORE_TYPE);
+        this.CAKeystore = KeyStore.getInstance(KEYSTORE_TYPE);
+
+        try {
+            this.EEKeystore.load(new FileInputStream(config.getEEKeyStore()), config.getKeyStorePassword().toCharArray());
+            this.CAKeystore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
+        }
+        catch (FileNotFoundException e) {
+            this.EEKeystore.load(null, null);
+            this.CAKeystore.load(null, null);
+        }
+
         this.config = config;
     }
 
-    public void store(CertificateChain certificateChain, CertificateType type) {
-        if (type == CertificateType.END_ENTITY) {
-            store(certificateChain, config.getEEKeyStore());
-        } else {
-            store(certificateChain, config.getCAKeyStore());
-        }
-    }
-
-    public void store(CertificateChain certificateChain, String keyStorePath) {
+    public void store(CertificateChain certificateChain, CertificateType certType) {
         String serialNumber = certificateChain.getCertificateChain()[0].getSerialNumber().toString();
+        KeyStore keyStore;
+        String keyStorePath;
+
+        if (certType == CertificateType.END_ENTITY) {
+            keyStore = this.EEKeystore;
+            keyStorePath = config.getEEKeyStore();
+        }
+        else {
+            keyStore = this.CAKeystore;
+            keyStorePath = config.getCAKeyStore();
+        }
+
         try {
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            try {
-                keyStore.load(new FileInputStream(keyStorePath), config.getKeyStorePassword().toCharArray());
-            } catch (IOException e) {
-                keyStore.load(null, null);
-            }
             keyStore.setKeyEntry(
-                    serialNumber,
-                    certificateChain.getPrivateKey(),
-                    serialNumber.toCharArray(),
-                    certificateChain.getCertificateChain());
-            keyStore.store(new FileOutputStream(keyStorePath), config.getKeyStorePassword().toCharArray());
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+                serialNumber,
+                certificateChain.getPrivateKey(),
+                serialNumber.toCharArray(),
+                certificateChain.getCertificateChain()
+            );
+            keyStore.store(
+                    new FileOutputStream(keyStorePath),
+                    config.getKeyStorePassword().toCharArray()
+            );
+        }
+        catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
             e.printStackTrace();
         }
     }
 
     private Certificate[] readCAChain(String serialNumber) {
         try {
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
-            return keyStore.getCertificateChain(serialNumber);
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            return this.CAKeystore.getCertificateChain(serialNumber);
         }
-        return null;
+        catch (KeyStoreException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    public Certificate[] getCertificateChain(String serialNumber) {
+    public Certificate[] getCertificateChain(String serialNumber, CertificateType type) {
         try {
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(new FileInputStream(config.getEEKeyStore()), config.getKeyStorePassword().toCharArray());
-            var eeCertificate = (X509Certificate)keyStore.getCertificate(serialNumber);
-            if (eeCertificate != null) {
-                X509Certificate issuerCertificate = findIssuerCertificate(eeCertificate.getIssuerX500Principal());
-                List<Certificate> chain = new ArrayList<>();
-                chain.add(eeCertificate);
-                for (var certificate: readCAChain(issuerCertificate.getSerialNumber().toString())) {
-                    chain.add(certificate);
-                }
-                Certificate[] certificateChain = new Certificate[chain.size()];
-                return chain.toArray(certificateChain);
+            List<Certificate> ALChain = new ArrayList<>();
+            if (type == CertificateType.END_ENTITY) {
+                var EECertificate = (X509Certificate)this.EEKeystore.getCertificate(serialNumber);
+                ALChain.add(EECertificate);
+                serialNumber = EECertificate.getIssuerX500Principal().toString();
             }
-            return keyStore.getCertificateChain(serialNumber);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
+            ALChain.addAll(Arrays.asList(this.CAKeystore.getCertificateChain(serialNumber)));
+            Certificate[] VChain = new Certificate[ALChain.size()];
+            return ALChain.toArray(VChain);
+        }
+        catch (KeyStoreException e) {
             e.printStackTrace();
         }
         return null;
@@ -122,79 +120,50 @@ public class CertificateStorage {
 
     public Certificate[] readAllCACertificates() {
         try {
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
-            var aliases = keyStore.aliases().asIterator();
-            List<Certificate> certificates = new ArrayList<>();
+            Iterator<String> aliases = this.CAKeystore.aliases().asIterator();
+            List<Certificate> ALCert = new ArrayList<>();
             while (aliases.hasNext()) {
-                var certificate = keyStore.getCertificate(aliases.next());
-                if (certificate != null) {
-                    certificates.add(certificate);
-                }
+                Certificate cert = this.CAKeystore.getCertificate(aliases.next());
+                if (cert != null)
+                    ALCert.add(cert);
             }
-            Certificate[] certificateArray = new Certificate[certificates.size()];
-            return certificates.toArray(certificateArray);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
+            Certificate[] VCert = new Certificate[ALCert.size()];
+            return ALCert.toArray(VCert);
         }
-        return null;
+        catch(KeyStoreException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    public Certificate readCertificate(String serialNumber) {
+    public Certificate readCertificate(String serialNumber, CertificateType certType) {
         try {
-            Certificate certificate;
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
-            certificate = keyStore.getCertificate(serialNumber);
-            if (certificate == null) {
-                keyStore.load(new FileInputStream(config.getEEKeyStore()), config.getKeyStorePassword().toCharArray());
-                certificate = keyStore.getCertificate(serialNumber);
-            }
-            return certificate;
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            if (certType == CertificateType.END_ENTITY)
+                return this.EEKeystore.getCertificate(serialNumber);
+            else
+                return this.CAKeystore.getCertificate(serialNumber);
         }
-        return null;
+        catch (KeyStoreException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public IssuerData findCAbySerialNumber(String serialNumber) throws IssuerNotFoundException {
         try {
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
-            Key key = keyStore.getKey(serialNumber, serialNumber.toCharArray());
+            // Why do we need PrivateKeys alongside Certs in the Keystore?
+            Key key = this.CAKeystore.getKey(serialNumber, serialNumber.toCharArray());
             if (key instanceof PrivateKey) {
-                X509Certificate certificate = (X509Certificate) keyStore.getCertificate(serialNumber);
+                X509Certificate certificate = (X509Certificate) this.CAKeystore.getCertificate(serialNumber);
                 return new IssuerData(new JcaX509CertificateHolder(certificate).getSubject(), (PrivateKey) key);
-            } else {
-                throw new IssuerNotFoundException("Issuer not found!");
             }
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (UnrecoverableKeyException e) {
-            e.printStackTrace();
+            else {
+                throw new IssuerNotFoundException();
+            }
         }
-        return null;
+        catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

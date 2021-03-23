@@ -5,22 +5,20 @@ import org.springframework.stereotype.Service;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.*;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.Certificate;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
-import rs.ac.uns.ftn.bsep.pki.exceptions.IssuerNotFoundException;
+import rs.ac.uns.ftn.bsep.pki.exceptions.CertificateNotFoundException;
 import rs.ac.uns.ftn.bsep.pki.repository.CertificateRepository;
 import rs.ac.uns.ftn.bsep.pki.storage.CertificateStorage;
 
 import java.security.*;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 public class CertificateService {
 
-    private CertificateGenerator certificateGenerator;
-    private CertificateStorage certificateStorage;
-    private CertificateRepository certificateRepository;
+    private final CertificateGenerator certificateGenerator;
+    private final CertificateStorage certificateStorage;
+    private final CertificateRepository certificateRepository;
 
     public CertificateService(CertificateGenerator certificateGenerator,
                               CertificateRepository certificateRepository,
@@ -28,7 +26,6 @@ public class CertificateService {
         this.certificateGenerator = certificateGenerator;
         this.certificateRepository = certificateRepository;
         this.certificateStorage = certificateStorage;
-
     }
 
     public Certificate save(CertificateRequest certificateRequest) {
@@ -75,8 +72,20 @@ public class CertificateService {
                 validity.getValidTo());
     }
 
-    public X509Certificate getCertificate(String serialNumber) {
-        certificateStorage.getCertificateChain(serialNumber);
-        return (X509Certificate)certificateStorage.readCertificate(serialNumber);
+    public X509Certificate get(String serialNumber) {
+        Optional<Certificate> cert = certificateRepository.getBySerialNumber(serialNumber);
+        if (cert.isEmpty()) return null;
+        return (X509Certificate)certificateStorage.readCertificate(serialNumber, cert.get().getCertificateType());
+    }
+
+    public void revoke(String serialNumber) throws CertificateNotFoundException {
+        Optional<Certificate> optCert = certificateRepository.getBySerialNumber(serialNumber);
+        if (optCert.isEmpty()) throw new CertificateNotFoundException();
+
+        Certificate cert = optCert.get();
+        cert.setRevoked(true);
+        certificateRepository.save(cert);
+
+        // TODO Fetch all other certs in chain (below this) and revoke them too
     }
 }
