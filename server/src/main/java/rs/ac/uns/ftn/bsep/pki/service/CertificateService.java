@@ -76,7 +76,7 @@ public class CertificateService {
     }
 
     public X509Certificate getCertificate(String serialNumber) {
+        certificateStorage.getCertificateChain(serialNumber);
         return (X509Certificate)certificateStorage.readCertificate(serialNumber);
     }
-
 }

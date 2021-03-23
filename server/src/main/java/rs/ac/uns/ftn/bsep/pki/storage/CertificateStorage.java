@@ -8,6 +8,7 @@ import rs.ac.uns.ftn.bsep.pki.domain.certificate.IssuerData;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
 import rs.ac.uns.ftn.bsep.pki.exceptions.IssuerNotFoundException;
 
+import javax.security.auth.x500.X500Principal;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -16,6 +17,8 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class CertificateStorage {
@@ -76,6 +79,68 @@ public class CertificateStorage {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Certificate[] getCertificateChain(String serialNumber) {
+        try {
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            keyStore.load(new FileInputStream(config.getEEKeyStore()), config.getKeyStorePassword().toCharArray());
+            var eeCertificate = (X509Certificate)keyStore.getCertificate(serialNumber);
+            if (eeCertificate != null) {
+                X509Certificate issuerCertificate = findIssuerCertificate(eeCertificate.getIssuerX500Principal());
+                List<Certificate> chain = new ArrayList<>();
+                chain.add(eeCertificate);
+                for (var certificate: readCAChain(issuerCertificate.getSerialNumber().toString())) {
+                    chain.add(certificate);
+                }
+                Certificate[] certificateChain = new Certificate[chain.size()];
+                return chain.toArray(certificateChain);
+            }
+            return keyStore.getCertificateChain(serialNumber);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private X509Certificate findIssuerCertificate(X500Principal issuerX500Principal) {
+        for (var certificate: readAllCACertificates()) {
+            if (((X509Certificate)certificate).getSubjectX500Principal().equals(issuerX500Principal))
+                return (X509Certificate) certificate;
+        }
+        return null;
+    }
+
+    public Certificate[] readAllCACertificates() {
+        try {
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            keyStore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
+            var aliases = keyStore.aliases().asIterator();
+            List<Certificate> certificates = new ArrayList<>();
+            while (aliases.hasNext()) {
+                var certificate = keyStore.getCertificate(aliases.next());
+                if (certificate != null) {
+                    certificates.add(certificate);
+                }
+            }
+            Certificate[] certificateArray = new Certificate[certificates.size()];
+            return certificates.toArray(certificateArray);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
             e.printStackTrace();
         }
         return null;
