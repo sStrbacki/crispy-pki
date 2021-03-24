@@ -11,6 +11,7 @@
     "axios": "^0.21.1",
     "bootstrap-vue": "^2.21.2",
     "core-js": "^3.9.1",
+    "date-fns": "^2.19.0",
     "v-calendar": "^2.3.0",
     "vue": "^2.6.12",
     "vue-meta": "^2.4.0",
