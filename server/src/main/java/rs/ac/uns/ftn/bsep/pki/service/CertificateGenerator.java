@@ -1,6 +1,5 @@
 package rs.ac.uns.ftn.bsep.pki.service;
 
-import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -13,10 +12,8 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.springframework.stereotype.Component;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateChain;
-import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateRequest;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.IssuerData;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.SubjectData;
-import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
 
 import java.math.BigInteger;
 import java.security.*;

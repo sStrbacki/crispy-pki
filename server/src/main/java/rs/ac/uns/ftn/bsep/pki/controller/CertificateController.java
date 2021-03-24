@@ -3,8 +3,12 @@ package rs.ac.uns.ftn.bsep.pki.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.Certificate;
+import rs.ac.uns.ftn.bsep.pki.domain.dto.CertificateDTO;
 import rs.ac.uns.ftn.bsep.pki.domain.dto.CertificateRequestDTO;
 import rs.ac.uns.ftn.bsep.pki.service.CertificateService;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -27,9 +31,17 @@ public class CertificateController {
         return certificateService.get(serialNumber).toString();
     }
 
+    @GetMapping
+    public List<CertificateDTO> getAll(){
+        return certificateService.getAll().stream()
+                .map(c -> new CertificateDTO(c, certificateService.getCertificateType(c.getSerialNumber().toString())))
+                .collect(Collectors.toList());
+    }
+
     @GetMapping("revoke/{serialNumber}")
     public ResponseEntity<Void> revoke(@PathVariable String serialNumber) {
         certificateService.revoke(serialNumber);
         return ResponseEntity.ok().build();
     }
+
 }

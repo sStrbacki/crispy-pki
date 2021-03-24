@@ -12,6 +12,11 @@ public class ValidityDTO {
     public ValidityDTO() {
     }
 
+    public ValidityDTO(Date notBefore, Date notAfter) {
+        this.validFrom = notBefore;
+        this.validTo = notAfter;
+    }
+
     public CertificateValidity toCertificateValidity() {
         return new CertificateValidity(validFrom, validTo);
     }

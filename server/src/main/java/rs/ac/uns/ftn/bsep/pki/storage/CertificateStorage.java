@@ -1,14 +1,12 @@
 package rs.ac.uns.ftn.bsep.pki.storage;
 
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
 import rs.ac.uns.ftn.bsep.pki.config.Config;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.CertificateChain;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.IssuerData;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
 import rs.ac.uns.ftn.bsep.pki.exceptions.IssuerNotFoundException;
-
 import javax.security.auth.x500.X500Principal;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -41,10 +39,15 @@ public class CertificateStorage {
 
         try {
             this.EEKeystore.load(new FileInputStream(config.getEEKeyStore()), config.getKeyStorePassword().toCharArray());
-            this.CAKeystore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
         }
         catch (FileNotFoundException e) {
             this.EEKeystore.load(null, null);
+        }
+
+        try {
+            this.CAKeystore.load(new FileInputStream(config.getCAKeyStore()), config.getKeyStorePassword().toCharArray());
+        }
+        catch (FileNotFoundException e) {
             this.CAKeystore.load(null, null);
         }
 
@@ -66,6 +69,7 @@ public class CertificateStorage {
         }
 
         try {
+
             keyStore.setKeyEntry(
                 serialNumber,
                 certificateChain.getPrivateKey(),

@@ -4,22 +4,21 @@ import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.springframework.stereotype.Component;
 import rs.ac.uns.ftn.bsep.pki.domain.dto.SubjectInfoDTO;
 import org.apache.commons.beanutils.PropertyUtils;
-import rs.ac.uns.ftn.bsep.pki.domain.dto.extensions.ExtensionsDTO;
-
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.util.Map;
 
 import static java.util.Map.entry;
 
 @Component
-public class CertificateRequestMapper {
+public class CertificateMapper {
 
     private final Map<String, ASN1ObjectIdentifier> rdns = Map.ofEntries(
         entry("UID", BCStyle.UID),
@@ -58,4 +57,26 @@ public class CertificateRequestMapper {
         }
         return builder.build();
     }
+    public String toIssuerCN(X509Certificate certificate){
+        JcaX509CertificateHolder certificateHolder;
+        try {
+            certificateHolder = new JcaX509CertificateHolder(certificate);
+        } catch (CertificateEncodingException e) {
+            return null;
+        }
+        var cn = certificateHolder.getIssuer().getRDNs(BCStyle.CN)[0];
+        return IETFUtils.valueToString(cn.getFirst().getValue());
+    }
+
+    public String toSubjectCN(X509Certificate certificate){
+        JcaX509CertificateHolder certificateHolder;
+        try {
+            certificateHolder = new JcaX509CertificateHolder(certificate);
+        } catch (CertificateEncodingException e) {
+            return null;
+        }
+        var cn = certificateHolder.getSubject().getRDNs(BCStyle.CN)[0];
+        return IETFUtils.valueToString(cn.getFirst().getValue());
+    }
+
 }
