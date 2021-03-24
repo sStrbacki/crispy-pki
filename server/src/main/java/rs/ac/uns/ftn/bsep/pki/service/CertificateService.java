@@ -4,6 +4,7 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.springframework.stereotype.Service;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.Certificate;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.*;
+import rs.ac.uns.ftn.bsep.pki.domain.dto.CertificateDTO;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
 import rs.ac.uns.ftn.bsep.pki.exceptions.CertificateNotFoundException;
 import rs.ac.uns.ftn.bsep.pki.repository.CertificateRepository;
@@ -81,10 +82,17 @@ public class CertificateService {
     }
 
     public List<X509Certificate> getAll(){
+        return findCertificates(certificateRepository.getNonRevoked());
+    }
 
-        ArrayList<X509Certificate> certificates = new ArrayList<>();
+    public List<X509Certificate> getAllCAs() {
+        return findCertificates(certificateRepository.getNonRevokedCAs());
+    }
 
-        for (var certificate : certificateRepository.getNonRevoked() ) {
+    private List<X509Certificate> findCertificates(List<Certificate> certificates){
+        ArrayList<X509Certificate> foundCertificates = new ArrayList<>();
+
+        for (var certificate : certificates) {
             var x509certificate = (X509Certificate) certificateStorage
                     .readCertificate(certificate.getSerialNumber(), certificate.getCertificateType());
             try {
@@ -92,10 +100,11 @@ public class CertificateService {
             } catch (CertificateExpiredException | CertificateNotYetValidException e) {
                 continue;
             }
-            certificates.add(x509certificate);
+            foundCertificates.add(x509certificate);
         }
 
-        return certificates;
+        return foundCertificates;
+
     }
 
     public CertificateType getCertificateType(String serialNumber){
@@ -113,4 +122,6 @@ public class CertificateService {
 
         // TODO Fetch all other certs in chain (below this) and revoke them too
     }
+
+
 }

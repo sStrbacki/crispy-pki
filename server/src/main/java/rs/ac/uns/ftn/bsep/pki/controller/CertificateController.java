@@ -38,6 +38,13 @@ public class CertificateController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("authorities")
+    public List<CertificateDTO> getAllCA(){
+        return certificateService.getAllCAs().stream()
+                .map(c -> new CertificateDTO(c, certificateService.getCertificateType(c.getSerialNumber().toString())))
+                .collect(Collectors.toList());
+    }
+
     @GetMapping("revoke/{serialNumber}")
     public ResponseEntity<Void> revoke(@PathVariable String serialNumber) {
         certificateService.revoke(serialNumber);

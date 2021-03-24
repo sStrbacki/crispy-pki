@@ -58,7 +58,7 @@
             <b-form class="w-50">
                 <b-form-group 
                     id="cert-type" 
-                    label="Certificate type:" 
+                    label="Certificate type (*):" 
                     label-for="cert-type-input"
                     label-cols-sm="4"
                     label-align-sm="left"
@@ -67,6 +67,7 @@
                     <b-form-select
                         id="cert-type-input"
                         v-model="certificate.certificateType"
+                        v-on:change="configureValidityRange"
                         :options="certificateOptions"
                         required
                     >
@@ -75,14 +76,16 @@
 
                 <b-form-group 
                     id="issuers" 
-                    label="Issuer:" 
+                    label="Issuer (*):" 
                     label-for="issuer-input"
                     label-cols-sm="4"
                     label-align-sm="left"
+                    v-if="!isSelfSigned"
                     >
 
                     <b-form-select
                         id="issuer-input"
+                        v-on:change="setValidityRange"
                         v-model="certificate.issuerSerialNumber"
                         :options="issuerOptions"
                     >
@@ -91,7 +94,7 @@
 
                 <b-form-group 
                     id="cert-validity" 
-                    label="Validity:" 
+                    label="Validity (*):" 
                     label-for="cert-v-input"
                     label-cols-sm="4"
                     label-align-sm="left"
@@ -99,7 +102,11 @@
                     content-cols-sm="8"
                     >
                     
-                    <DatePicker v-model="certificatePeriod" is-range>
+                    <DatePicker v-model="certificatePeriod"
+                                is-range 
+                                :min-date="validityPeriod.min" 
+                                :max-date="validityPeriod.max">
+
                         <template v-slot="{ inputValue, inputEvents }">
                             <div class="cal-input-group">
                                 <input
@@ -132,24 +139,24 @@
                 </b-form-group>
 
                 <b-form-group 
-                    id="cert-uid" 
-                    label="Certificate UID:" 
-                    label-for="cert-uid-input"
+                    id="cert-cn" 
+                    label="CN (*):" 
+                    label-for="cert-cn-input"
                     label-cols-sm="4"
                     label-align-sm="left"
                     >
                     
                     <b-form-input
-                        id="cert-uid-input"
-                        v-model="certificate.subjectInfo.UID"
-                        placeholder="Enter certificate UID"
+                        id="cert-cn-input"
+                        v-model="certificate.subjectInfo.commonName"
+                        placeholder="Enter a common name"
                     >
                     </b-form-input>
                 </b-form-group>
-                
+
                 <b-form-group 
                     id="cert-on" 
-                    label="ON:" 
+                    label="ON (*):" 
                     label-for="cert-on-input"
                     label-cols-sm="4"
                     label-align-sm="left"
@@ -179,21 +186,6 @@
                     </b-form-input>
                 </b-form-group>
 
-                <b-form-group 
-                    id="cert-cn" 
-                    label="CN:" 
-                    label-for="cert-cn-input"
-                    label-cols-sm="4"
-                    label-align-sm="left"
-                    >
-                    
-                    <b-form-input
-                        id="cert-cn-input"
-                        v-model="certificate.subjectInfo.commonName"
-                        placeholder="Enter a common name"
-                    >
-                    </b-form-input>
-                </b-form-group>
 
                 <b-form-group 
                     id="cert-gn" 
@@ -211,6 +203,22 @@
                     </b-form-input>
                 </b-form-group>
 
+                <b-form-group 
+                    id="cert-uid" 
+                    label="Certificate UID:" 
+                    label-for="cert-uid-input"
+                    label-cols-sm="4"
+                    label-align-sm="left"
+                    >
+                    
+                    <b-form-input
+                        id="cert-uid-input"
+                        v-model="certificate.subjectInfo.UID"
+                        placeholder="Enter certificate UID"
+                    >
+                    </b-form-input>
+                </b-form-group>
+                
                 <b-form-group 
                     id="cert-surname" 
                     label="Surname:" 
@@ -420,26 +428,38 @@
                 </b-form-group>
 
                 <b-row class="mt-4"></b-row>
-
-                <b-button type="submit" class="mr-5" variant="primary">Submit</b-button>
-                <b-button type="reset" variant="danger">Reset</b-button>
+  
             </b-form>
-        </b-row>
 
+        </b-row>
+        <b-row align-h="center">
+             <b-button type="submit" class="mr-5" variant="primary" :disabled="!certValid" @click="submit">Submit</b-button>
+        </b-row>
         <b-row class="mt-5"></b-row>
     </b-container>
 </template>
 
 <script>
 import DatePicker from 'v-calendar/lib/components/date-picker.umd'
+import { mapGetters } from 'vuex'
 
 export default {
     name:'NewCertificate',
-    mounted(){
-        this.$bvModal.show('ext-modal')
-    },
     components:{
         DatePicker
+    },
+    computed: {
+        isSelfSigned:function() {
+            return this.certificate.certificateType === 'SELF_SIGNED'
+        },
+        certValid:function(){
+            return this.certificate.certificateType != null &&
+            ( ( this.certificate.certificateType == 'SELF_SIGNED' && this.certificate.issuerSerialNumber == null) 
+            || ( this.certificate.certificateType != 'SELF_SIGNED' && this.certificate.issuerSerialNumber != null)) &&
+            this.certificatePeriod.start != null && this.certificatePeriod.end != null &&
+            this.certificate.subjectInfo.commonName != null && this.certificate.subjectInfo.organizationName
+        },
+        ...mapGetters(['issuerValidity'])
     },
     data(){
         return {
@@ -485,22 +505,23 @@ export default {
                 start:null,
                 end:null
             },
+            validityPeriod: {
+                min: new Date(),
+                max: null
+            },
+            availableAuthorities:[],
             certificateOptions:[
                     { text: 'Select certificate type', value: null },
                     { text: 'Root CA', value: 'SELF_SIGNED'},
                     { text: 'Intermediate', value: 'INTERMEDIATE'},
-                    { text: 'Self-signed', value: 'END_ENTITY'}
+                    { text: 'End entity', value: 'END_ENTITY'}
             ],
             genderOptions:[
                     { text: 'Choose gender', value: null },
                     { text: 'Male', value: 'M'},
                     { text: 'Female', value: 'F'}
             ],
-            issuerOptions:[
-                { text: 'Select an issuer', value: null },
-                { text: 'ftn.us.ac.rs', value: 'serialNumber1'},
-                { text: 'djordje.balasevic.mrtav', value: 'serialNumber2' }
-            ],
+            issuerOptions:[ { text: 'Select an issuer', value: null } ],
             keyUsageOptions:[
                 { text: 'Digital signature', value:'DIGITAL_SIGNATURE' },
                 { text: 'Non repudiation', value:'NON_REPUDIATION' },
@@ -521,6 +542,68 @@ export default {
                 { text: 'OCSP signing', value:'OCSP_SIGNING' },
             ]
         }
+    },
+    methods:{
+        configureValidityRange(){
+            if(this.certificate.certificateType === 'SELF_SIGNED'){
+                this.resetValidityRange()
+        }
+        },
+        resetValidityRange(){
+            this.validityPeriod.min = new Date()
+            this.validityPeriod.max = null
+        },
+
+        setValidityRange(){
+            var validityRange = this.issuerValidity(this.certificate.issuerSerialNumber)
+
+            this.validityPeriod.min = new Date(validityRange.validFrom)
+            if(this.validityPeriod.min < new Date())
+                this.validityPeriod = new Date()
+            this.validityPeriod.max = new Date(validityRange.validTo)
+        },
+        submit(){
+            this.certificate.certificateValidity.validFrom = this.certificatePeriod.start
+            this.certificate.certificateValidity.validTo = this.certificatePeriod.end
+
+            this.$store.state.certificateRequest = this.certificate
+            this.$store.dispatch("postCertificate")
+            .then(() => {
+                this.$notify({
+                    group: 'foo',
+                    position:'top right',
+                    type:'success',
+                    width:'200%',
+                    text: 'Yey! Your certificate has been successfully issued!'
+                })
+            })
+            .catch(() => {
+                this.$notify({
+                    group: 'foo',
+                    position:'top right',
+                    type:'error',
+                    width:'200%',
+                    text: 'Oh no! An error occurred, please try again later :('
+                })
+            })
+            
+        }
+    },
+    mounted(){
+            this.$bvModal.show('ext-modal')
+
+            if(this.certificate.certificateType !== 'SELF_SIGNED'){
+                this.$store.dispatch("getAuthorities")
+                .then( () => {
+                    let authorities = this.$store.state.authorities
+                    authorities.forEach(authority => {
+                        this.issuerOptions.push({
+                            text: authority.subjectCN,
+                            value: authority.serialNumber
+                        })
+                    });
+                })
+            }
     }
 }
 </script>
