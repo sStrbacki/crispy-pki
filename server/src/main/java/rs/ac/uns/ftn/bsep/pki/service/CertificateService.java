@@ -32,6 +32,8 @@ public class CertificateService {
         this.certificateStorage = certificateStorage;
     }
 
+    private final String CHAIN_ID_SEP = "-";
+
     public Certificate save(CertificateRequest certificateRequest) {
         KeyPair keyPair = generateKeyPair();
         IssuerData issuerData;
@@ -46,7 +48,7 @@ public class CertificateService {
         else {
             issuerData = certificateStorage.findCAbySerialNumber(certificateRequest.getIssuerSerialNumber());
             Certificate issuerCert = certificateRepository.findBySerialNumber(certificateRequest.getIssuerSerialNumber());
-            chainId += "-" + issuerCert.getChainId();
+            chainId += CHAIN_ID_SEP + issuerCert.getChainId();
         }
 
         var certificateChain =
@@ -103,8 +105,14 @@ public class CertificateService {
         ArrayList<X509Certificate> foundCertificates = new ArrayList<>();
 
         for (var certificate : certificates) {
-            var x509certificate = (X509Certificate) certificateStorage
+            X509Certificate x509certificate = (X509Certificate) certificateStorage
                     .readCertificate(certificate.getSerialNumber(), certificate.getCertificateType());
+            try {
+                x509certificate.checkValidity();
+            }
+            catch (CertificateNotYetValidException | CertificateExpiredException e) {
+                continue;
+            }
             foundCertificates.add(x509certificate);
         }
 
