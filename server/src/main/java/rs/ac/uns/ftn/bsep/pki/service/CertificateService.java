@@ -136,4 +136,10 @@ public class CertificateService {
             certificateRepository.saveAll(childCerts);
         }
     }
+
+    public boolean isRevoked(String serialNumber) {
+        Certificate cert = certificateRepository.findBySerialNumber(serialNumber);
+        if (cert == null) throw new CertificateNotFoundException();
+        return cert.isRevoked();
+    }
 }
