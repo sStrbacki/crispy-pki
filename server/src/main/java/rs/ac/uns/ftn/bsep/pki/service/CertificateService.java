@@ -137,9 +137,11 @@ public class CertificateService {
         }
     }
 
-    public boolean isRevoked(String serialNumber) {
+    public enum OCSPStatus { GOOD, REVOKED, UNKNOWN }
+
+    public OCSPStatus isRevoked(String serialNumber) {
         Certificate cert = certificateRepository.findBySerialNumber(serialNumber);
-        if (cert == null) throw new CertificateNotFoundException();
-        return cert.isRevoked();
+        if (cert == null) return OCSPStatus.UNKNOWN;
+        return (cert.isRevoked() ? OCSPStatus.REVOKED : OCSPStatus.GOOD);
     }
 }
