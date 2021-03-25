@@ -5,6 +5,7 @@ let certificate = '/api/certificate'
 export const api = {
     certificate: {
         root: host + certificate,
-        authorities: host + certificate + '/authorities'
+        authorities: host + certificate + '/authorities',
+        download: host + certificate + '/download'
     }
 }

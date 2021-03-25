@@ -20,6 +20,11 @@ export default {
                     hiddenOnCollapse: true
                 },
                 {
+                    href: '/',
+                    title: 'All certificates',
+                    icon: 'fas fa-list'
+                },
+                {
                     href: { path: '/new' },
                     title: 'New certificate',
                     icon: 'far fa-plus-square'
@@ -33,13 +38,7 @@ export default {
                     href: '/validity',
                     title: 'Check validity',
                     icon: 'fas fa-check-double'
-                },
-                {
-                    href: '/',
-                    title: 'All certificates',
-                    icon: 'fas fa-list'
-                },
-                
+                }
             ]
         }
     },

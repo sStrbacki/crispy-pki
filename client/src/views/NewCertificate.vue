@@ -13,7 +13,7 @@
 
                     <b-form-checkbox
                     id="ku-critical"
-                    v-model="certificate.extensions.keyPurposes.isCritical"
+                    v-model="certificate.extensions.keyPurposes.critical"
                     value="true"
                     unchecked-value="false"
                     class="mt-0 mb-4"
@@ -34,7 +34,7 @@
 
                     <b-form-checkbox
                     id="eku-critical"
-                    v-model="certificate.extensions.extendedKeyPurposes.isCritical"
+                    v-model="certificate.extensions.extendedKeyPurposes.critical"
                     value="true"
                     unchecked-value="false"
                     class="mt-0 mb-4"
@@ -492,11 +492,11 @@ export default {
                 },
                 extensions: {
                     keyPurposes: {
-                        isCritical: false,
+                        critical: false,
                         keyPurposes: []
                     },
                     extendedKeyPurposes: {
-                        isCritical: false,
+                        critical: false,
                         extendedKeyPurposes: []
                     }
                 }
@@ -565,6 +565,10 @@ export default {
         submit(){
             this.certificate.certificateValidity.validFrom = this.certificatePeriod.start
             this.certificate.certificateValidity.validTo = this.certificatePeriod.end
+            this.certificate.extensions.keyPurposes.critical 
+                = this.certificate.extensions.keyPurposes.critical === "true" ? true : false
+            this.certificate.extensions.extendedKeyPurposes.critical 
+                = this.certificate.extensions.extendedKeyPurposes.critical === "true" ? true : false
 
             this.$store.state.certificateRequest = this.certificate
             this.$store.dispatch("postCertificate")
@@ -576,6 +580,7 @@ export default {
                     width:'200%',
                     text: 'Yey! Your certificate has been successfully issued!'
                 })
+                this.$router.push('/')
             })
             .catch(() => {
                 this.$notify({

@@ -1,5 +1,9 @@
 package rs.ac.uns.ftn.bsep.pki.controller;
 
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import rs.ac.uns.ftn.bsep.pki.domain.certificate.Certificate;
@@ -7,6 +11,8 @@ import rs.ac.uns.ftn.bsep.pki.domain.dto.CertificateDTO;
 import rs.ac.uns.ftn.bsep.pki.domain.dto.CertificateRequestDTO;
 import rs.ac.uns.ftn.bsep.pki.service.CertificateService;
 
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,5 +64,28 @@ public class CertificateController {
     @GetMapping("validate/{serialNumber}")
     public void validate(@PathVariable String serialNumber) {
         certificateService.validate(serialNumber);
+    }
+
+    @GetMapping("download/{serialNumber}")
+    public ResponseEntity<?> download(@PathVariable String serialNumber){
+        X509Certificate certificate = certificateService.get(serialNumber);
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.add(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename ="
+        + certificate.getSerialNumber().toString() + ".cer");
+
+        try {
+            ByteArrayResource resource =
+                    new ByteArrayResource(certificate.getEncoded());
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentType(MediaType.parseMediaType("application/octet-stream"))
+                    .body(resource);
+
+        }catch (CertificateEncodingException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+
     }
 }

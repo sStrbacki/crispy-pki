@@ -10,15 +10,15 @@ import java.util.List;
 
 public class KeyPurposesDTO {
 
-    private boolean isCritical;
+    private boolean critical;
     private List<KeyPurpose> keyPurposes;
 
-    public boolean isCritical() {
-        return isCritical;
+    public boolean getCritical() {
+        return critical;
     }
 
     public void setCritical(boolean critical) {
-        isCritical = critical;
+        this.critical = critical;
     }
 
     public List<KeyPurpose> getKeyPurposes() {
@@ -30,12 +30,15 @@ public class KeyPurposesDTO {
     }
 
     public Extension toExtension() throws IOException {
+        if(keyPurposes.size() == 0)
+            return null;
+
         int keyUsageId = keyPurposes.get(0).getKeyUsageId();
 
         for(int i = 1 ; i < keyPurposes.size() - 2 ; i++)
             keyUsageId |= keyPurposes.get(i).getKeyUsageId();
 
-        return new Extension(Extension.keyUsage, isCritical, new DEROctetString(new KeyUsage(keyUsageId)));
+        return new Extension(Extension.keyUsage, critical, new DEROctetString(new KeyUsage(keyUsageId)));
     }
 
 }

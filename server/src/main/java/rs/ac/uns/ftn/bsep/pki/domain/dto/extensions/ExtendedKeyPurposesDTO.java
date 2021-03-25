@@ -10,18 +10,18 @@ import java.util.List;
 
 public class ExtendedKeyPurposesDTO {
 
-    private boolean isCritical;
+    private boolean critical;
     private List<ExtendedKeyPurpose> extendedKeyPurposes;
 
     public ExtendedKeyPurposesDTO() {
     }
 
-    public boolean isCritical() {
-        return isCritical;
+    public boolean getCritical() {
+        return critical;
     }
 
     public void setCritical(boolean critical) {
-        isCritical = critical;
+        this.critical = critical;
     }
 
     public List<ExtendedKeyPurpose> getExtendedKeyPurposes() {
@@ -32,6 +32,10 @@ public class ExtendedKeyPurposesDTO {
         this.extendedKeyPurposes = extendedKeyPurposes;
     }
     public Extension toExtension() throws IOException {
+
+        if(extendedKeyPurposes.size() == 0)
+            return null;
+
         var keyPurposeIds = new KeyPurposeId[extendedKeyPurposes.size()];
 
         for (int i = 0 ; i < extendedKeyPurposes.size() ; i++)
@@ -39,7 +43,7 @@ public class ExtendedKeyPurposesDTO {
 
         return new Extension(
                 Extension.extendedKeyUsage,
-                isCritical,
+                critical,
                 new DEROctetString(new ExtendedKeyUsage(keyPurposeIds)));
     }
 }
