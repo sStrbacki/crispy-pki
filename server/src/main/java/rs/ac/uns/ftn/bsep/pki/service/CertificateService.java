@@ -155,5 +155,12 @@ public class CertificateService {
         } catch (CertificateNotYetValidException e) {
             throw new InvalidCertificateException("Certificate is not yet valid.");
         }
+
+        var status = isRevoked(serialNumber);
+        if (status == OCSPStatus.REVOKED) {
+            throw new InvalidCertificateException("Certificate is revoked.");
+        } else if (status == OCSPStatus.UNKNOWN) {
+            throw new InvalidCertificateException("Unknown certificate.");
+        }
     }
 }
