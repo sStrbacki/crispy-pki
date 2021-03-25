@@ -91,7 +91,8 @@ public class CertificateService {
     }
 
     public List<X509Certificate> getAll(){
-        return findCertificates(certificateRepository.getNonRevoked());
+        var certs = certificateRepository.getNonRevoked();
+        return findCertificates(certs);
     }
 
     public List<X509Certificate> getAllCAs() {
@@ -104,11 +105,6 @@ public class CertificateService {
         for (var certificate : certificates) {
             var x509certificate = (X509Certificate) certificateStorage
                     .readCertificate(certificate.getSerialNumber(), certificate.getCertificateType());
-            try {
-                x509certificate.checkValidity();
-            } catch (CertificateExpiredException | CertificateNotYetValidException e) {
-                continue;
-            }
             foundCertificates.add(x509certificate);
         }
 
