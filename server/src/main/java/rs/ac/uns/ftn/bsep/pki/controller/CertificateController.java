@@ -45,10 +45,9 @@ public class CertificateController {
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("revoke/{serialNumber}")
-    public ResponseEntity<Void> revoke(@PathVariable String serialNumber) {
+    @DeleteMapping("{serialNumber}")
+    public void revoke(@PathVariable String serialNumber) {
         certificateService.revoke(serialNumber);
-        return ResponseEntity.ok().build();
     }
 
     @GetMapping("revoked/{serialNumber}")
