@@ -107,12 +107,6 @@ public class CertificateService {
         for (var certificate : certificates) {
             X509Certificate x509certificate = (X509Certificate) certificateStorage
                     .readCertificate(certificate.getSerialNumber(), certificate.getCertificateType());
-            try {
-                x509certificate.checkValidity();
-            }
-            catch (CertificateNotYetValidException | CertificateExpiredException e) {
-                continue;
-            }
             foundCertificates.add(x509certificate);
         }
 
