@@ -69,7 +69,6 @@ public class CertificateStorage {
         }
 
         try {
-
             keyStore.setKeyEntry(
                 serialNumber,
                 certificateChain.getPrivateKey(),

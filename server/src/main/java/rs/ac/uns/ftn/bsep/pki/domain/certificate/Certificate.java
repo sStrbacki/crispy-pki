@@ -21,17 +21,29 @@ public class Certificate {
     @Column(nullable = false)
     private boolean revoked;
 
+    @Column(nullable = false)
+    private String chainId;
+
     @Column
     private RevocationReasonCode reasonCode;
 
     public Certificate() {
     }
 
-    public Certificate(String serialNumber, CertificateType certificateType){
+    public Certificate(String serialNumber, CertificateType certificateType, String chainId){
         this.serialNumber = serialNumber;
         this.certificateType = certificateType;
         this.revoked = false;
         this.reasonCode = null;
+        this.chainId = chainId;
+    }
+
+    public String getChainId() {
+        return chainId;
+    }
+
+    public void setChainId(String chainId) {
+        this.chainId = chainId;
     }
 
     public Long getId() {
