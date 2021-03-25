@@ -7,6 +7,7 @@ import rs.ac.uns.ftn.bsep.pki.domain.certificate.*;
 import rs.ac.uns.ftn.bsep.pki.domain.enums.CertificateType;
 import rs.ac.uns.ftn.bsep.pki.exceptions.CertificateAlreadyRevokedException;
 import rs.ac.uns.ftn.bsep.pki.exceptions.CertificateNotFoundException;
+import rs.ac.uns.ftn.bsep.pki.exceptions.InvalidCertificateException;
 import rs.ac.uns.ftn.bsep.pki.repository.CertificateRepository;
 import rs.ac.uns.ftn.bsep.pki.storage.CertificateStorage;
 import java.security.*;
@@ -143,5 +144,16 @@ public class CertificateService {
         Certificate cert = certificateRepository.findBySerialNumber(serialNumber);
         if (cert == null) return OCSPStatus.UNKNOWN;
         return (cert.isRevoked() ? OCSPStatus.REVOKED : OCSPStatus.GOOD);
+    }
+
+    public void validate(String serialNumber) {
+        X509Certificate certificate = get(serialNumber);
+        try {
+            certificate.checkValidity();
+        } catch (CertificateExpiredException e) {
+            throw new InvalidCertificateException("Certificate has expired.");
+        } catch (CertificateNotYetValidException e) {
+            throw new InvalidCertificateException("Certificate is not yet valid.");
+        }
     }
 }

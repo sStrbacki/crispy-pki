@@ -54,4 +54,9 @@ public class CertificateController {
     public ResponseEntity<CertificateService.OCSPStatus> isRevoked(@PathVariable String serialNumber) {
         return ResponseEntity.ok(certificateService.isRevoked(serialNumber));
     }
+
+    @GetMapping("validate/{serialNumber}")
+    public void validate(@PathVariable String serialNumber) {
+        certificateService.validate(serialNumber);
+    }
 }
