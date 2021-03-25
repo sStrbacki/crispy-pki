@@ -9,12 +9,12 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 @EnableWebMvc
 @ControllerAdvice
-public class IssuerNotFoundExceptionHandler {
+public class RuntimeExceptionHandler {
 
     @ResponseBody
-    @ExceptionHandler(value = IssuerNotFoundException.class)
+    @ExceptionHandler(value = RuntimeException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    String handleIssuerNotFound(IssuerNotFoundException e) {
+    String runtimeExceptionHandler(RuntimeException e) {
         return e.getMessage();
     }
 }
